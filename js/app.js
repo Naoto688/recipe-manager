@@ -1,37 +1,20 @@
-const recipes = [
-  {
-    id: 1,
-    name: "鮭の塩焼き定食",
-    category: "和食",
-    cookingTime: 25,
-    ingredients: "鮭の切り身 1切れ\n塩 少々\nごはん 1膳",
-    instructions: "鮭に塩をふり、10分ほど置く。\n魚焼きグリルで両面を焼く。",
-    image: "🍚",
-    isFavorite: false,
-  },
-  {
-    id: 2,
-    name: "トマトパスタ",
-    category: "洋食",
-    cookingTime: 20,
-    ingredients: "スパゲッティ 100g\nトマトソース 150g\nオリーブオイル 大さじ1",
-    instructions: "スパゲッティをゆでる。\nフライパンでトマトソースを温め、麺とあえる。",
-    image: "🍝",
-    isFavorite: false,
-  },
-  {
-    id: 3,
-    name: "麻婆豆腐",
-    category: "中華",
-    cookingTime: 30,
-    ingredients: "豆腐 1丁\n豚ひき肉 100g\n麻婆豆腐の素 1袋",
-    instructions: "豆腐を食べやすい大きさに切る。\nひき肉を炒め、豆腐と麻婆豆腐の素を加えて煮る。",
-    image: "🥘",
-    isFavorite: false,
-  },
-];
+const SUPABASE_URL = "https://ggqifkbdinqwirsdzaxf.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_Q4pHdDuda-gw5247bKWFQg_l1sM1DE8";
 
-let nextRecipeId = recipes.length + 1;
+if (!window.supabase || typeof window.supabase.createClient !== "function") {
+  const error = new Error("SupabaseのJavaScriptライブラリを読み込めませんでした。");
+  console.error("Supabaseライブラリの読み込みに失敗しました。", error);
+  window.alert("データベースライブラリを読み込めませんでした。通信環境を確認してください。");
+  throw error;
+}
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY,
+);
+
+let recipes = [];
 let editingRecipeId = null;
 let selectedRecipeId = null;
 
@@ -96,7 +79,7 @@ if (
   !recipeDetailIngredients ||
   !recipeDetailInstructions
 ) {
-  throw new Error("レシピ一覧、検索欄、登録フォーム、詳細画面のいずれかが見つかりません。");
+  throw new Error("画面に必要なレシピ一覧、検索欄、登録フォーム、詳細画面が見つかりません。");
 }
 
 const noResultsMessage = document.createElement("p");
@@ -104,6 +87,13 @@ noResultsMessage.textContent = "条件に一致するレシピが見つかりま
 noResultsMessage.setAttribute("role", "status");
 noResultsMessage.hidden = true;
 recipeList.after(noResultsMessage);
+
+function reportDatabaseError(action, error) {
+  const details =
+    error && error.message ? error.message : String(error);
+  console.error(`${action}に失敗しました。`, error);
+  window.alert(`${action}に失敗しました。\n${details}`);
+}
 
 function normalizeText(text) {
   return text
@@ -114,20 +104,6 @@ function normalizeText(text) {
     );
 }
 
-function openRecipeDetails(recipe) {
-  selectedRecipeId = recipe.id;
-  recipeDetailTitle.textContent = recipe.name;
-  recipeDetailCategory.textContent = `カテゴリー：${recipe.category}`;
-  recipeDetailTime.textContent = recipe.cookingTime
-    ? `調理時間：${recipe.cookingTime}分`
-    : "調理時間：未入力";
-  recipeDetailIngredients.textContent =
-    recipe.ingredients || "材料は登録されていません。";
-  recipeDetailInstructions.textContent =
-    recipe.instructions || "調理手順は登録されていません。";
-  recipeDetailDialog.showModal();
-}
-
 function findRecipeById(recipeId) {
   const recipe = recipes.find((item) => item.id === recipeId);
 
@@ -136,6 +112,20 @@ function findRecipeById(recipeId) {
   }
 
   return recipe;
+}
+
+function openRecipeDetails(recipe) {
+  selectedRecipeId = recipe.id;
+  recipeDetailTitle.textContent = recipe.title;
+  recipeDetailCategory.textContent = `カテゴリー：${recipe.category}`;
+  recipeDetailTime.textContent = recipe.time
+    ? `調理時間：${recipe.time}分`
+    : "調理時間：未入力";
+  recipeDetailIngredients.textContent =
+    recipe.ingredients || "材料は登録されていません。";
+  recipeDetailInstructions.textContent =
+    recipe.steps || "調理手順は登録されていません。";
+  recipeDetailDialog.showModal();
 }
 
 function setRecipeFormMode(isEditing) {
@@ -160,7 +150,7 @@ function createRecipeCard(recipe) {
   const card = document.createElement("article");
   card.classList.add("recipe-card");
   card.tabIndex = 0;
-  card.setAttribute("aria-label", `${recipe.name}の詳細を表示`);
+  card.setAttribute("aria-label", `${recipe.title}の詳細を表示`);
   card.addEventListener("click", () => {
     openRecipeDetails(recipe);
   });
@@ -177,42 +167,65 @@ function createRecipeCard(recipe) {
   const image = document.createElement("div");
   image.classList.add("recipe-image");
   image.setAttribute("role", "img");
-  image.setAttribute("aria-label", `${recipe.name}のイメージ`);
-  image.textContent = recipe.image;
+  image.setAttribute("aria-label", `${recipe.title}のイメージ`);
+  image.textContent = "🍽️";
 
-  const name = document.createElement("h3");
-  name.textContent = recipe.name;
+  const title = document.createElement("h3");
+  title.textContent = recipe.title;
 
   const category = document.createElement("p");
   category.textContent = `カテゴリー：${recipe.category}`;
 
   const cookingTime = document.createElement("p");
-  cookingTime.textContent = recipe.cookingTime
-    ? `調理時間：${recipe.cookingTime}分`
+  cookingTime.textContent = recipe.time
+    ? `調理時間：${recipe.time}分`
     : "調理時間：未入力";
 
   const favoriteButton = document.createElement("button");
   favoriteButton.type = "button";
 
   function updateFavoriteButton() {
-    favoriteButton.textContent = recipe.isFavorite ? "★" : "☆";
-    favoriteButton.setAttribute("aria-pressed", String(recipe.isFavorite));
+    favoriteButton.textContent = recipe.is_favorite ? "★" : "☆";
+    favoriteButton.setAttribute("aria-pressed", String(recipe.is_favorite));
     favoriteButton.setAttribute(
       "aria-label",
-      recipe.isFavorite
-        ? `${recipe.name}のお気に入りを解除する`
-        : `${recipe.name}をお気に入りにする`,
+      recipe.is_favorite
+        ? `${recipe.title}のお気に入りを解除する`
+        : `${recipe.title}をお気に入りにする`,
     );
   }
 
-  favoriteButton.addEventListener("click", (event) => {
+  favoriteButton.addEventListener("click", async (event) => {
     event.stopPropagation();
-    recipe.isFavorite = !recipe.isFavorite;
-    updateFavoriteButton();
+    favoriteButton.disabled = true;
+
+    try {
+      const { data, error } = await supabaseClient
+        .from("recipes")
+        .update({ is_favorite: !recipe.is_favorite })
+        .eq("id", recipe.id)
+        .select("id");
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error("更新対象が見つからないか、更新権限がありません。");
+      }
+
+      const refreshed = await loadRecipes();
+      if (!refreshed) {
+        favoriteButton.disabled = false;
+      }
+    } catch (error) {
+      favoriteButton.disabled = false;
+      reportDatabaseError("お気に入りの更新", error);
+    }
   });
   updateFavoriteButton();
 
-  card.append(image, name, category, cookingTime, favoriteButton);
+  card.append(image, title, category, cookingTime, favoriteButton);
   return card;
 }
 
@@ -221,7 +234,7 @@ function renderRecipes() {
   const selectedCategory = categoryFilter.value;
 
   const filteredRecipes = recipes.filter((recipe) => {
-    const matchesKeyword = normalizeText(recipe.name).includes(keyword);
+    const matchesKeyword = normalizeText(recipe.title).includes(keyword);
     const matchesCategory =
       selectedCategory === "" || recipe.category === selectedCategory;
 
@@ -236,9 +249,132 @@ function renderRecipes() {
   });
 }
 
+async function loadRecipes() {
+  try {
+    const { data, error } = await supabaseClient
+      .from("recipes")
+      .select(
+        "id, title, category, time, ingredients, steps, is_favorite, created_at",
+      )
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      reportDatabaseError("レシピの読み込み", error);
+      return false;
+    }
+
+    if (!Array.isArray(data)) {
+      throw new Error("レシピデータを一覧として読み込めませんでした。");
+    }
+
+    recipes = data;
+    renderRecipes();
+    return true;
+  } catch (error) {
+    reportDatabaseError("レシピの読み込み", error);
+    return false;
+  }
+}
+
+async function saveRecipe(event) {
+  event.preventDefault();
+
+  const formData = new FormData(recipeForm);
+  const title = String(formData.get("name") || "").trim();
+
+  if (!title) {
+    recipeNameInput.value = "";
+    recipeNameInput.reportValidity();
+    return;
+  }
+
+  const cookingTimeValue = String(formData.get("cookingTime") || "");
+  const recipeValues = {
+    title,
+    category: String(formData.get("category") || "その他"),
+    time: cookingTimeValue ? Number(cookingTimeValue) : null,
+    ingredients: String(formData.get("ingredients") || "").trim(),
+    steps: String(formData.get("instructions") || "").trim(),
+  };
+
+  try {
+    if (editingRecipeId === null) {
+      const { error } = await supabaseClient
+        .from("recipes")
+        .insert({ ...recipeValues, is_favorite: false });
+
+      if (error) {
+        throw error;
+      }
+    } else {
+      const { data, error } = await supabaseClient
+        .from("recipes")
+        .update(recipeValues)
+        .eq("id", editingRecipeId)
+        .select("id");
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error("更新対象が見つからないか、更新権限がありません。");
+      }
+    }
+
+    resetRecipeForm();
+    searchInput.value = "";
+    categoryFilter.value = "";
+    recipeDialog.close();
+    selectedRecipeId = null;
+    await loadRecipes();
+  } catch (error) {
+    reportDatabaseError(
+      editingRecipeId === null ? "レシピの登録" : "レシピの更新",
+      error,
+    );
+  }
+}
+
+async function deleteSelectedRecipe() {
+  let recipe;
+
+  try {
+    recipe = findRecipeById(selectedRecipeId);
+  } catch (error) {
+    reportDatabaseError("レシピの削除", error);
+    return;
+  }
+
+  if (!window.confirm(`「${recipe.title}」を削除しますか？`)) {
+    return;
+  }
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("recipes")
+      .delete()
+      .eq("id", recipe.id)
+      .select("id");
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error("削除対象が見つからないか、削除権限がありません。");
+    }
+
+    selectedRecipeId = null;
+    recipeDetailDialog.close();
+    await loadRecipes();
+  } catch (error) {
+    reportDatabaseError("レシピの削除", error);
+  }
+}
+
 searchInput.addEventListener("input", renderRecipes);
 categoryFilter.addEventListener("change", renderRecipes);
-
 openRecipeFormButton.addEventListener("click", openNewRecipeForm);
 
 function closeRecipeForm() {
@@ -248,9 +384,7 @@ function closeRecipeForm() {
 
 closeRecipeFormButton.addEventListener("click", closeRecipeForm);
 cancelRecipeFormButton.addEventListener("click", closeRecipeForm);
-recipeDialog.addEventListener("cancel", () => {
-  resetRecipeForm();
-});
+recipeDialog.addEventListener("cancel", resetRecipeForm);
 
 closeRecipeDetailsButton.addEventListener("click", () => {
   recipeDetailDialog.close();
@@ -265,11 +399,11 @@ recipeDetailDialog.addEventListener("click", (event) => {
 editRecipeButton.addEventListener("click", () => {
   const recipe = findRecipeById(selectedRecipeId);
   editingRecipeId = recipe.id;
-  recipeNameInput.value = recipe.name;
+  recipeNameInput.value = recipe.title;
   recipeCategoryInput.value = recipe.category;
-  recipeTimeInput.value = recipe.cookingTime ?? "";
-  recipeIngredientsInput.value = recipe.ingredients;
-  recipeInstructionsInput.value = recipe.instructions;
+  recipeTimeInput.value = recipe.time ?? "";
+  recipeIngredientsInput.value = recipe.ingredients || "";
+  recipeInstructionsInput.value = recipe.steps || "";
   setRecipeFormMode(true);
 
   recipeDetailDialog.close();
@@ -277,65 +411,7 @@ editRecipeButton.addEventListener("click", () => {
   recipeDialog.showModal();
 });
 
-deleteRecipeButton.addEventListener("click", () => {
-  const recipe = findRecipeById(selectedRecipeId);
-  const shouldDelete = window.confirm(`「${recipe.name}」を削除しますか？`);
+deleteRecipeButton.addEventListener("click", deleteSelectedRecipe);
+recipeForm.addEventListener("submit", saveRecipe);
 
-  if (!shouldDelete) {
-    return;
-  }
-
-  const recipeIndex = recipes.findIndex((item) => item.id === selectedRecipeId);
-  recipes.splice(recipeIndex, 1);
-  selectedRecipeId = null;
-  recipeDetailDialog.close();
-  renderRecipes();
-});
-
-recipeForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-
-  const formData = new FormData(recipeForm);
-  const name = String(formData.get("name") || "").trim();
-
-  if (!name) {
-    recipeNameInput.value = "";
-    recipeNameInput.reportValidity();
-    return;
-  }
-
-  const cookingTimeValue = String(formData.get("cookingTime") || "");
-  const updatedValues = {
-    name,
-    category: String(formData.get("category") || "その他"),
-    cookingTime: cookingTimeValue ? Number(cookingTimeValue) : null,
-    ingredients: String(formData.get("ingredients") || "").trim(),
-    instructions: String(formData.get("instructions") || "").trim(),
-  };
-
-  if (editingRecipeId === null) {
-    recipes.unshift({
-      id: nextRecipeId,
-      ...updatedValues,
-      image: "🍽️",
-      isFavorite: false,
-    });
-    nextRecipeId += 1;
-  } else {
-    const recipe = findRecipeById(editingRecipeId);
-    recipe.name = updatedValues.name;
-    recipe.category = updatedValues.category;
-    recipe.cookingTime = updatedValues.cookingTime;
-    recipe.ingredients = updatedValues.ingredients;
-    recipe.instructions = updatedValues.instructions;
-  }
-
-  resetRecipeForm();
-  searchInput.value = "";
-  categoryFilter.value = "";
-  recipeDialog.close();
-  selectedRecipeId = null;
-  renderRecipes();
-});
-
-renderRecipes();
+loadRecipes();
