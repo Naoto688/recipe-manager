@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>わたしのレシピノート</title>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <header>
+      <h1>わたしのレシピノート</h1>
+    </header>
+
+    <main>
+      <section aria-labelledby="recipe-list-title">
+        <h2 id="recipe-list-title">レシピ一覧</h2>
+
+        <form action="#" method="get">
+          <div>
+            <label for="recipe-search">レシピを検索</label>
+            <input
+              type="search"
+              id="recipe-search"
+              name="q"
+              placeholder="料理名で検索"
+            >
+          </div>
+
+          <div>
+            <label for="category-filter">カテゴリー</label>
+            <select id="category-filter" name="category">
+              <option value="">すべて</option>
+              <option value="和食">和食</option>
+              <option value="洋食">洋食</option>
+              <option value="中華">中華</option>
+            </select>
+          </div>
+        </form>
+
+        <div class="recipe-list" id="recipe-list" aria-live="polite"></div>
+
+        <button type="button">レシピを追加</button>
+      </section>
+    </main>
+    <script src="js/app.js"></script>
+  </body>
+</html>

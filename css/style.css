@@ -1,0 +1,168 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+  color: #38291f;
+  background-color: #fffaf5;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  line-height: 1.6;
+}
+
+header {
+  padding: 20px 16px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #f0e5db;
+}
+
+header h1 {
+  max-width: 1080px;
+  margin: 0 auto;
+  color: #a64e20;
+  font-size: 1.5rem;
+}
+
+main {
+  width: min(100% - 32px, 1080px);
+  margin: 0 auto;
+  padding: 28px 0 48px;
+}
+
+section > h2 {
+  margin: 0 0 20px;
+  font-size: 1.35rem;
+}
+
+form {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid #d9c9bb;
+  border-radius: 10px;
+  background-color: #ffffff;
+  color: inherit;
+  font: inherit;
+}
+
+input::placeholder {
+  color: #85776d;
+}
+
+input:focus,
+select:focus,
+button:focus-visible {
+  outline: 3px solid #f2b27e;
+  outline-offset: 2px;
+}
+
+.recipe-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.recipe-card {
+  padding: 16px;
+  border: 1px solid #f0e5db;
+  border-radius: 16px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 14px rgb(75 48 27 / 6%);
+}
+
+.recipe-image {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fff0dc, #f8d7b5);
+  font-size: 4rem;
+}
+
+.recipe-card h3 {
+  margin: 16px 0 8px;
+  font-size: 1.2rem;
+}
+
+.recipe-card p {
+  margin: 4px 0;
+  color: #66564a;
+}
+
+button {
+  min-height: 48px;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 10px;
+  background-color: #c65f27;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #a94c1c;
+}
+
+.recipe-card button {
+  display: grid;
+  width: 48px;
+  margin-top: 12px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #f0c6a6;
+  background-color: #fff4ea;
+  color: #a94c1c;
+  font-size: 1.6rem;
+}
+
+.recipe-card button:hover {
+  background-color: #ffe6d2;
+}
+
+section > button {
+  width: 100%;
+  margin-top: 24px;
+}
+
+@media (min-width: 640px) {
+  form {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  .recipe-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  section > button {
+    width: auto;
+  }
+}
+
+@media (min-width: 960px) {
+  .recipe-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
