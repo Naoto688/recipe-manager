@@ -12,166 +12,205 @@
     <link rel="stylesheet" href="css/style.css">
   </head>
   <body>
-    <header>
-      <h1>わたしのレシピノート</h1>
-    </header>
-
-    <main>
-      <section aria-labelledby="recipe-list-title">
-        <h2 id="recipe-list-title">レシピ一覧</h2>
-
-        <form action="#" method="get">
+    <main class="auth-screen" id="login-screen">
+      <section class="auth-card" aria-labelledby="login-title">
+        <h1 id="login-title">ログイン</h1>
+        <form class="auth-form" id="login-form">
           <div>
-            <label for="recipe-search">レシピを検索</label>
+            <label for="login-email">メールアドレス</label>
             <input
-              type="search"
-              id="recipe-search"
-              name="q"
-              placeholder="料理名で検索"
+              type="email"
+              id="login-email"
+              name="email"
+              autocomplete="email"
+              required
             >
           </div>
 
           <div>
-            <label for="category-filter">カテゴリー</label>
-            <select id="category-filter" name="category">
-              <option value="">すべて</option>
+            <label for="login-password">パスワード</label>
+            <input
+              type="password"
+              id="login-password"
+              name="password"
+              autocomplete="current-password"
+              required
+            >
+          </div>
+
+          <button type="submit" id="login-button">ログイン</button>
+          <p class="auth-error" id="login-error" role="alert" hidden></p>
+        </form>
+      </section>
+    </main>
+
+    <div id="app-content" hidden>
+      <header>
+        <div class="header-inner">
+          <h1>わたしのレシピノート</h1>
+          <button type="button" class="logout-button" id="logout-button">
+            ログアウト
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section aria-labelledby="recipe-list-title">
+          <h2 id="recipe-list-title">レシピ一覧</h2>
+
+          <form action="#" method="get">
+            <div>
+              <label for="recipe-search">レシピを検索</label>
+              <input
+                type="search"
+                id="recipe-search"
+                name="q"
+                placeholder="料理名で検索"
+              >
+            </div>
+
+            <div>
+              <label for="category-filter">カテゴリー</label>
+              <select id="category-filter" name="category">
+                <option value="">すべて</option>
+                <option value="和食">和食</option>
+                <option value="洋食">洋食</option>
+                <option value="中華">中華</option>
+                <option value="その他">その他</option>
+              </select>
+            </div>
+          </form>
+
+          <div class="recipe-list" id="recipe-list" aria-live="polite"></div>
+
+          <button type="button" id="open-recipe-form">新規レシピ登録</button>
+        </section>
+      </main>
+
+      <dialog
+        class="recipe-dialog"
+        id="recipe-dialog"
+        aria-labelledby="recipe-dialog-title"
+      >
+        <div class="recipe-dialog-header">
+          <h2 id="recipe-dialog-title">新規レシピ登録</h2>
+          <button
+            type="button"
+            class="recipe-dialog-close"
+            id="close-recipe-form"
+            aria-label="フォームを閉じる"
+          >
+            ×
+          </button>
+        </div>
+
+        <form class="recipe-form" id="recipe-form">
+          <div>
+            <label for="new-recipe-name">料理名（必須）</label>
+            <input
+              type="text"
+              id="new-recipe-name"
+              name="name"
+              maxlength="100"
+              required
+            >
+          </div>
+
+          <div>
+            <label for="new-recipe-category">カテゴリー</label>
+            <select id="new-recipe-category" name="category">
               <option value="和食">和食</option>
               <option value="洋食">洋食</option>
               <option value="中華">中華</option>
               <option value="その他">その他</option>
             </select>
           </div>
+
+          <div>
+            <label for="new-recipe-time">調理時間（分）</label>
+            <input
+              type="number"
+              id="new-recipe-time"
+              name="cookingTime"
+              min="1"
+              step="1"
+            >
+          </div>
+
+          <div>
+            <label for="new-recipe-ingredients">材料・分量</label>
+            <textarea
+              id="new-recipe-ingredients"
+              name="ingredients"
+              rows="4"
+            ></textarea>
+          </div>
+
+          <div>
+            <label for="new-recipe-instructions">調理手順</label>
+            <textarea
+              id="new-recipe-instructions"
+              name="instructions"
+              rows="5"
+            ></textarea>
+          </div>
+
+          <div class="recipe-form-actions">
+            <button
+              type="button"
+              class="secondary-button"
+              id="cancel-recipe-form"
+            >
+              キャンセル
+            </button>
+            <button type="submit" id="submit-recipe-form">登録する</button>
+          </div>
         </form>
+      </dialog>
 
-        <div class="recipe-list" id="recipe-list" aria-live="polite"></div>
-
-        <button type="button" id="open-recipe-form">新規レシピ登録</button>
-      </section>
-    </main>
-
-    <dialog
-      class="recipe-dialog"
-      id="recipe-dialog"
-      aria-labelledby="recipe-dialog-title"
-    >
-      <div class="recipe-dialog-header">
-        <h2 id="recipe-dialog-title">新規レシピ登録</h2>
-        <button
-          type="button"
-          class="recipe-dialog-close"
-          id="close-recipe-form"
-          aria-label="フォームを閉じる"
-        >
-          ×
-        </button>
-      </div>
-
-      <form class="recipe-form" id="recipe-form">
-        <div>
-          <label for="new-recipe-name">料理名（必須）</label>
-          <input
-            type="text"
-            id="new-recipe-name"
-            name="name"
-            maxlength="100"
-            required
-          >
-        </div>
-
-        <div>
-          <label for="new-recipe-category">カテゴリー</label>
-          <select id="new-recipe-category" name="category">
-            <option value="和食">和食</option>
-            <option value="洋食">洋食</option>
-            <option value="中華">中華</option>
-            <option value="その他">その他</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="new-recipe-time">調理時間（分）</label>
-          <input
-            type="number"
-            id="new-recipe-time"
-            name="cookingTime"
-            min="1"
-            step="1"
-          >
-        </div>
-
-        <div>
-          <label for="new-recipe-ingredients">材料・分量</label>
-          <textarea
-            id="new-recipe-ingredients"
-            name="ingredients"
-            rows="4"
-          ></textarea>
-        </div>
-
-        <div>
-          <label for="new-recipe-instructions">調理手順</label>
-          <textarea
-            id="new-recipe-instructions"
-            name="instructions"
-            rows="5"
-          ></textarea>
-        </div>
-
-        <div class="recipe-form-actions">
+      <dialog
+        class="recipe-dialog recipe-detail-dialog"
+        id="recipe-detail-dialog"
+        aria-labelledby="recipe-detail-title"
+      >
+        <div class="recipe-dialog-header">
+          <h2 id="recipe-detail-title"></h2>
           <button
             type="button"
             class="secondary-button"
-            id="cancel-recipe-form"
+            id="close-recipe-details"
           >
-            キャンセル
+            閉じる
           </button>
-          <button type="submit" id="submit-recipe-form">登録する</button>
         </div>
-      </form>
-    </dialog>
 
-    <dialog
-      class="recipe-dialog recipe-detail-dialog"
-      id="recipe-detail-dialog"
-      aria-labelledby="recipe-detail-title"
-    >
-      <div class="recipe-dialog-header">
-        <h2 id="recipe-detail-title"></h2>
-        <button
-          type="button"
-          class="secondary-button"
-          id="close-recipe-details"
+        <p class="recipe-detail-meta" id="recipe-detail-category"></p>
+        <p class="recipe-detail-meta" id="recipe-detail-time"></p>
+
+        <section
+          class="recipe-detail-section"
+          aria-labelledby="recipe-detail-ingredients-title"
         >
-          閉じる
-        </button>
-      </div>
+          <h3 id="recipe-detail-ingredients-title">材料・分量</h3>
+          <p class="recipe-detail-text" id="recipe-detail-ingredients"></p>
+        </section>
 
-      <p class="recipe-detail-meta" id="recipe-detail-category"></p>
-      <p class="recipe-detail-meta" id="recipe-detail-time"></p>
+        <section
+          class="recipe-detail-section"
+          aria-labelledby="recipe-detail-instructions-title"
+        >
+          <h3 id="recipe-detail-instructions-title">調理手順</h3>
+          <p class="recipe-detail-text" id="recipe-detail-instructions"></p>
+        </section>
 
-      <section
-        class="recipe-detail-section"
-        aria-labelledby="recipe-detail-ingredients-title"
-      >
-        <h3 id="recipe-detail-ingredients-title">材料・分量</h3>
-        <p class="recipe-detail-text" id="recipe-detail-ingredients"></p>
-      </section>
-
-      <section
-        class="recipe-detail-section"
-        aria-labelledby="recipe-detail-instructions-title"
-      >
-        <h3 id="recipe-detail-instructions-title">調理手順</h3>
-        <p class="recipe-detail-text" id="recipe-detail-instructions"></p>
-      </section>
-
-      <div class="recipe-detail-actions">
-        <button type="button" id="edit-recipe">編集</button>
-        <button type="button" class="danger-button" id="delete-recipe">
-          削除
-        </button>
-      </div>
-    </dialog>
+        <div class="recipe-detail-actions">
+          <button type="button" id="edit-recipe">編集</button>
+          <button type="button" class="danger-button" id="delete-recipe">
+            削除
+          </button>
+        </div>
+      </dialog>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/app.js"></script>

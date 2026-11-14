@@ -17,7 +17,17 @@ const supabaseClient = window.supabase.createClient(
 let recipes = [];
 let editingRecipeId = null;
 let selectedRecipeId = null;
+let activeUserId = null;
+let authGeneration = 0;
 
+const loginScreen = document.querySelector("#login-screen");
+const loginForm = document.querySelector("#login-form");
+const loginEmailInput = document.querySelector("#login-email");
+const loginPasswordInput = document.querySelector("#login-password");
+const loginButton = document.querySelector("#login-button");
+const loginError = document.querySelector("#login-error");
+const appContent = document.querySelector("#app-content");
+const logoutButton = document.querySelector("#logout-button");
 const recipeList = document.querySelector("#recipe-list");
 const searchInput = document.querySelector("#recipe-search");
 const categoryFilter = document.querySelector("#category-filter");
@@ -54,6 +64,14 @@ const recipeDetailInstructions = document.querySelector(
 );
 
 if (
+  !loginScreen ||
+  !loginForm ||
+  !loginEmailInput ||
+  !loginPasswordInput ||
+  !loginButton ||
+  !loginError ||
+  !appContent ||
+  !logoutButton ||
   !recipeList ||
   !searchInput ||
   !categoryFilter ||
@@ -249,7 +267,7 @@ function renderRecipes() {
   });
 }
 
-async function loadRecipes() {
+async function loadRecipes(requestGeneration = authGeneration) {
   try {
     const { data, error } = await supabaseClient
       .from("recipes")
@@ -257,6 +275,10 @@ async function loadRecipes() {
         "id, title, category, time, ingredients, steps, is_favorite, created_at",
       )
       .order("created_at", { ascending: false });
+
+    if (requestGeneration !== authGeneration || !activeUserId) {
+      return false;
+    }
 
     if (error) {
       reportDatabaseError("レシピの読み込み", error);
@@ -373,6 +395,77 @@ async function deleteSelectedRecipe() {
   }
 }
 
+function showLoginError(error) {
+  console.error("Supabase Authへのログインに失敗しました。", error);
+
+  const message =
+    error && error.message ? error.message.toLowerCase() : "";
+
+  if (message.includes("invalid login credentials")) {
+    loginError.textContent =
+      "メールアドレスまたはパスワードが正しくありません。";
+  } else if (message.includes("email not confirmed")) {
+    loginError.textContent =
+      "メールアドレスの確認が完了していません。受信メールをご確認ください。";
+  } else if (error && error.status === 429) {
+    loginError.textContent =
+      "ログイン試行が多すぎます。しばらく待ってからもう一度お試しください。";
+  } else if (message.includes("fetch") || message.includes("network")) {
+    loginError.textContent =
+      "サーバーに接続できません。インターネット接続を確認してください。";
+  } else {
+    loginError.textContent =
+      "ログインできませんでした。入力内容を確認して、もう一度お試しください。";
+  }
+
+  loginError.hidden = false;
+}
+
+async function handleLogin(event) {
+  event.preventDefault();
+  loginError.hidden = true;
+  loginButton.disabled = true;
+  loginButton.textContent = "ログイン中...";
+
+  try {
+    const { error } = await supabaseClient.auth.signInWithPassword({
+      email: loginEmailInput.value.trim(),
+      password: loginPasswordInput.value,
+    });
+
+    if (error) {
+      showLoginError(error);
+      return;
+    }
+
+    loginForm.reset();
+  } catch (error) {
+    showLoginError(error);
+  } finally {
+    loginButton.disabled = false;
+    loginButton.textContent = "ログイン";
+  }
+}
+
+async function handleLogout() {
+  logoutButton.disabled = true;
+
+  try {
+    const { error } = await supabaseClient.auth.signOut();
+
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    console.error("Supabase Authからのログアウトに失敗しました。", error);
+    window.alert(
+      "ログアウトできませんでした。通信環境を確認して、もう一度お試しください。",
+    );
+  } finally {
+    logoutButton.disabled = false;
+  }
+}
+
 searchInput.addEventListener("input", renderRecipes);
 categoryFilter.addEventListener("change", renderRecipes);
 openRecipeFormButton.addEventListener("click", openNewRecipeForm);
@@ -414,4 +507,53 @@ editRecipeButton.addEventListener("click", () => {
 deleteRecipeButton.addEventListener("click", deleteSelectedRecipe);
 recipeForm.addEventListener("submit", saveRecipe);
 
-loadRecipes();
+loginForm.addEventListener("submit", handleLogin);
+logoutButton.addEventListener("click", handleLogout);
+
+supabaseClient.auth.onAuthStateChange((_event, session) => {
+  const user = session ? session.user : null;
+
+  if (!user) {
+    authGeneration += 1;
+    activeUserId = null;
+    recipes = [];
+    recipeList.textContent = "";
+    noResultsMessage.hidden = true;
+    resetRecipeForm();
+    if (recipeDialog.open) {
+      recipeDialog.close();
+    }
+    if (recipeDetailDialog.open) {
+      recipeDetailDialog.close();
+    }
+    loginForm.reset();
+    loginError.hidden = true;
+    loginScreen.hidden = false;
+    appContent.hidden = true;
+    return;
+  }
+
+  loginScreen.hidden = true;
+  appContent.hidden = false;
+  loginError.hidden = true;
+
+  if (activeUserId === user.id) {
+    return;
+  }
+
+  activeUserId = user.id;
+  recipes = [];
+  recipeList.textContent = "";
+  noResultsMessage.hidden = true;
+  const requestGeneration = authGeneration + 1;
+  authGeneration = requestGeneration;
+
+  window.setTimeout(() => {
+    if (
+      activeUserId === user.id &&
+      authGeneration === requestGeneration
+    ) {
+      loadRecipes(requestGeneration);
+    }
+  }, 0);
+});
